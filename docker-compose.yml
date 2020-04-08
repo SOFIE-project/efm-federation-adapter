@@ -1,0 +1,84 @@
+version: '3.1'
+
+services:
+  iot-agent:
+    image: fiware/iotagent-json
+    hostname: iot-agent
+    container_name: fiware-iot-agent
+    restart: unless-stopped
+    depends_on:
+        - mongo-db
+    expose:
+        - "4041"
+        - "7896"
+    ports:
+        - "4041:4041"
+        - "7896:7896"
+    environment:
+        - "IOTA_CB_HOST=orion"
+        - "IOTA_CB_PORT=1026"
+        - "IOTA_NORTH_PORT=4041"
+        - "IOTA_REGISTRY_TYPE=mongodb"
+        - "IOTA_MONGO_HOST=mongo-db"
+        - "IOTA_MONGO_PORT=27017"
+        - "IOTA_MONGO_DB=iotagent-json"
+        - "IOTA_HTTP_PORT=7896"
+        - "IOTA_PROVIDER_URL=http://iot-agent:4041"
+        - "IOTA_MQTT_HOST=mosquitto"
+        - "IOTA_MQTT_PORT=1883"
+    networks:
+              - default
+  mongo-db:
+    image: mongo:3.6
+    hostname: mongo-db
+    container_name: mongo-db
+    restart: unless-stopped
+    ports:
+        - "27017:27017"
+    command: --bind_ip_all --smallfiles
+    networks:
+              - default
+  orion:
+    image: fiware/orion
+    hostname: orion
+    container_name: fiware-orion
+    restart: unless-stopped
+    depends_on:
+        - mongo-db
+    expose:
+        - "1026"
+    ports:
+        - "1026:1026"
+    command: -dbhost mongo-db
+    networks:
+              - default
+  mosquitto:
+      image: eclipse-mosquitto
+      hostname: mosquitto
+      container_name: mosquitto
+      restart: unless-stopped
+      expose:
+        - "1883"
+        - "9001"
+      ports:
+        - "1883:1883"
+        - "9001:9001"
+      networks:
+        - default
+  sth-comet:
+      image: fiware/sth-comet
+      hostname: sth-comet
+      container_name: fiware-sth-comet
+      restart: unless-stopped
+      depends_on:
+          - mongo-db
+      networks:
+          - default
+      ports:
+          - "8666:8666"
+      environment:
+          - STH_HOST=0.0.0.0
+          - STH_PORT=8666
+          - DB_PREFIX=sth_
+          - DB_URI=mongo-db:27017
+          - LOGOPS_LEVEL=DEBUG

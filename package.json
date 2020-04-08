@@ -1,0 +1,20 @@
+{
+  "name": "federation-adapter",
+  "version": "1.0.0",
+  "description": "**NOTE:** In order to increase modularity of the documentation and keep the README within a reasonable lenght, **sections and sub-sections can link to nested documentation files** in the relative sub-folder or, in alternative, a Wiki can be setup and referenced, where needed.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://production.eng.it/gitlab/SEDM/smart-energy/SOFIE/iot-agents.git"
+  },
+  "author": "Giuseppe Raveduto (ENG)",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^0.19.2",
+    "mqtt": "^3.0.0"
+  }
+}
