@@ -64,7 +64,7 @@ async function selectionManager(selection) {
           }
         ]
       }, config)
-      .then(response => messageHandler(response.data, null))
+      .then(() => messageHandler('\033[32m openiot \033[0m service created successfully, using \033[32m /iot/json \033[0m endpoint and \033[32m 4jggokgpepnvsb2uv4s40d59ov \033[0m api key ', null))
       .catch(error => messageHandler(null, error));
       break;
     case '3':
@@ -84,7 +84,7 @@ async function selectionManager(selection) {
           }
         ]
       }, config)
-      .then(response => messageHandler(response.data, null))
+      .then(() => messageHandler('Device \033[32m motion001 \033[0m created successfully', null))
       .catch(error => messageHandler(null, error));
       break;
     case '4':
