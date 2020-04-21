@@ -62,6 +62,7 @@ async function selectionManager(selection) {
     case '3':
       adapter.createSensor(device, name, type)
       .then(() => messageHandler(`Device ${colors.green(device)} created successfully`))
+
       .catch(error => messageHandler(null, error));
       break;
     case '4':
