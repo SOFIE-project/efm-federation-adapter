@@ -1,13 +1,23 @@
 #!/usr/bin/env node
-
-const axios = require('axios');
-const client = require('mqtt').connect('mqtt://localhost:1883');
+const colors = require('colors/safe');
 const readline = require('readline');
+const mqttClient = require('mqtt').connect('mqtt://localhost:1883');
+
+const createAdapter = require('./src').client;
 
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout
 });
+
+const service = 'openiot';
+const endpoint = '/iot/json';
+const key =  '4jggokgpepnvsb2uv4s40d59ov';
+const device = 'motion001'
+const name = 'urn:ngsi-ld:Motion:001'
+const type = 'Motion'
+
+const adapter = createAdapter(service, endpoint, key);
 
 function readLineAsync(message) {
   return new Promise((resolve) => {
@@ -15,6 +25,15 @@ function readLineAsync(message) {
   });
 } 
 
+function messageHandler(message, error) {
+  if (error) {
+    console.error(error);
+  } else {
+    console.log(message);
+  }
+  
+  init();
+}
 
 async function init() {
   console.log('1. Check the IoT Agent Service Health');
@@ -29,77 +48,31 @@ async function init() {
 }
 
 async function selectionManager(selection) {
-  const config = {
-    headers: {
-      'Content-Type': 'application/json',
-      'fiware-service': 'openiot',
-      'fiware-servicepath': '/'
-    }
-  };
-
-  function messageHandler(message, error) {
-    if (error) {
-      console.error(error);
-      init();
-    } else {
-      console.log(message);
-      init();
-    }
-  }
-
   switch(selection) {
     case '1':
-      axios.get('http://localhost:4041/iot/about')
-      .then(response => messageHandler(response.data, null))
-      .catch(error => messageHandler(null, error));
+      adapter.checkStatus()
+        .then(response => messageHandler(response.data))
+        .catch(error => messageHandler(null, error));
       break;
     case '2':
-      axios.post('http://localhost:4041/iot/services', {
-        "services": [
-          {
-            "apikey":      "4jggokgpepnvsb2uv4s40d59ov",
-            "cbroker":     "http://orion:1026",
-            "entity_type": "Thing",
-            "resource":    "/iot/json"
-          }
-        ]
-      }, config)
-      .then(() => messageHandler('\033[32m openiot \033[0m service created successfully, using \033[32m /iot/json \033[0m endpoint and \033[32m 4jggokgpepnvsb2uv4s40d59ov \033[0m api key ', null))
+      adapter.createGroup()
+      .then(() => messageHandler(`${colors.green(service)} service created successfully, using ${colors.green(endpoint)} endpoint and ${colors.green(key)} api key`))
       .catch(error => messageHandler(null, error));
       break;
     case '3':
-      axios.post('http://localhost:4041/iot/devices', {
-        "devices": [
-          {
-            "device_id":   "motion001",
-            "entity_name": "urn:ngsi-ld:Motion:001",
-            "entity_type": "Motion",
-            "timezone":    "Europe/Berlin",
-            "attributes": [
-              { "object_id": "c", "name": "count", "type": "Integer" }
-            ],
-            "static_attributes": [
-              { "name":"refStore", "type": "Relationship", "value": "urn:ngsi-ld:Store:001"}
-            ]
-          }
-        ]
-      }, config)
-      .then(() => messageHandler('Device \033[32m motion001 \033[0m created successfully', null))
+      adapter.createSensor(device, name, type)
+      .then(() => messageHandler(`Device ${colors.green(device)} created successfully`))
+
       .catch(error => messageHandler(null, error));
       break;
     case '4':
       const value = await readLineAsync('insert value: ');
-      client.publish('/4jggokgpepnvsb2uv4s40d59ov/motion001/attrs', `{"c": ${Number(value)} }`);
-      messageHandler(`publishing ${value} over MQTT`, null);
+      mqttClient.publish(`/${key}/${device}/attrs`, `{"c": ${Number(value)} }`);
+      messageHandler(`publishing ${colors.green(value)} over MQTT`);
       break;
-    case '5':
-      axios.get('http://localhost:1026/v2/entities/urn:ngsi-ld:Motion:001?type=Motion', {
-        headers: {
-          'fiware-service': 'openiot',
-          'fiware-servicepath': '/'
-        }
-      })
-      .then(response => messageHandler(response.data, null))
+    case '5':      
+      adapter.retrieveData(name, type)
+      .then(response => messageHandler(response.data))
       .catch(error => messageHandler(null, error));
       break;
     case 'q':
